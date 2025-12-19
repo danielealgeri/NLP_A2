@@ -105,15 +105,15 @@ The Introduction is an executive summary, which you can think of as an extended 
 %Introduction Body
 Traditional approaches for text classification often rely on supervised learning with models like BERT \cite{bertmodel}, which require extensive fine-tuning. Recently, Large Language Models (LLMs) have introduced the paradigm of "prompting," allowing models to perform classification tasks without weight updates, relying instead on in-context learning.
 In this work, we investigate the efficacy of LLMs in categorizing a set of texts into five distinct categories: \textit{not-sexist}, or one among four sexist classes, namely \textit{threats}, \textit{derogation}, \textit{animosity}, and \textit{prejudiced discussion}. We compare a lightweight model (TinyLlama-1.1B) against a larger model (Mistral-7B).
-Our experimental setup involves classifying a balanced, supervised test set of approximately 300 texts, using two different strategies: \textbf{Zero-Shot}, where the model is given the task description and input text only, and \textbf{Few-Shot}, where the model is provided with the task description and a small set of labeled examples.
+Our experimental setup involves classifying a balanced, supervised test set of 300 texts, using two different strategies: \textbf{Zero-Shot} prompting, where the model is given the task description and input text only, and \textbf{Few-Shot} prompting, where the model is provided with the task description and a small set of labeled examples.
 
 In addition, we perform \textbf{Prompt Tuning} to TinyLlama to address its instruction-following limitations.
 Our experiment highlights that:
 
 \begin{itemize}
     \item The smaller model (TinyLlama, 1.1B parameters) lacks the capacity to follow the syntactic constraints out-of-the-box, and outputs invalid labels for every instance in the dataset.
-    \item Prompt tuning successfully forced such model to output valid labels, but could not induce the reasoning required for correct classification.
-    \item Mistral tends to default to the “animosity” class in the zero-shot setting.
+    \item Prompt Tuning successfully forced such model to output valid labels, but could not induce the reasoning required for correct classification.
+    \item Mistral tends to default to the \textit{animosity} class in the zero-shot setting.
 \end{itemize}
 %end of Introduction Body
 
@@ -156,7 +156,7 @@ We implemented an inference pipeline based on the Hugging Face \texttt{transform
             \item \textbf{Few-Shot:} Instruction + labeled examples + target text.
         \end{itemize} 
     \item \textbf{Inference:} The prompt is passed to the LLM.
-    \item \textbf{Output Parsing:} The raw text response is mapped to numerical IDs (0–4). If the model generates invalid text, the system defaults to \textbf{0} (not-sexist).
+    \item \textbf{Output Parsing:} The raw text response is mapped to numerical IDs (0–4). If the model generates invalid text, the system defaults to \textbf{0} (\textit{not-sexist}).
 \end{enumerate}
 
 %\subsection{Prompt Tuning}
@@ -231,7 +231,7 @@ The invalid outputs provided by TinyLlama, in both Zero-Shot and Few-Shot Infere
 A possible reason for this behavior is that TinyLlama-Chat is trained primarily for conversational settings, %\cite{tinyllamamodelcard}
 where verbose and explanatory answers are generally preferred. Even the inclusion of in-context demonstrations (Few-Shot prompting) proved insufficient to enforce syntactic adherence, likely because this technique relies on a model’s ability to perform in-context learning, which is known to scale strongly with model size.
 
-Ultimately, the prompt tuning experiment was successful in making the model learn the syntax, as all 300 examples in the test dataset were classified with a single, valid label; nevertheless, the model still failed to learn the semantics, leading to unsatisfying performance once again. This dual failure—first in formatting, then in discrimination—strongly suggests that the 1.1B parameter size acts as a fundamental bottleneck for the classification performance.
+Ultimately, the Prompt Tuning experiment was successful in making the model learn the syntax, as all 300 examples in the test dataset were classified with a single, valid label; nevertheless, the model still failed to learn the semantics, leading to unsatisfying performance once again. This dual failure—first in formatting, then in discrimination—strongly suggests that the 1.1B parameter size acts as a fundamental bottleneck for the classification performance.
 
 Concerning Mistral, the model presents a strong bias towards the \textit{animosity} class in the Zero-Shot setting, which, however, was significantly mitigated by few-shot prompting, as shown by the two confusion matrices in Figure~\ref{fig:conf_matrix}
 
@@ -256,7 +256,7 @@ Threats: The text expresses intent [...]"
 \begin{figure}[h]
   \centering
   \includegraphics[width=1.05\linewidth]{conf_matrix.png}
-  \caption{Confusion matrices for Minstral in Zero-Shot and Few-Shot Inference.}
+  \caption{Confusion matrices for Mistral in Zero-Shot and Few-Shot Inference.}
   \label{fig:conf_matrix}
 \end{figure}
 
@@ -278,9 +278,9 @@ After that, discuss the main limitations of the solution you have implemented, a
 
 %Conlcusion Section Body start
 
-In this experiment, we evaluated the capabilities of LLMs for multiclass sexism detection. We observed that model size is a decisive factor not only for rigid instruction following (syntax) but also for the semantic understanding required to distinguish between complex classes. TinyLlama-1.1B proved unable to adhere to the output format in standard prompting; furthermore, even when prompt tuning successfully enforced syntactic compliance, the model lacked the representational depth to discriminate between categories, collapsing into a single-class prediction.
+In this experiment, we evaluated the capabilities of LLMs for multiclass sexism detection. We observed that model size is a decisive factor not only for rigid instruction following (syntax) but also for the semantic understanding required to distinguish between complex classes. TinyLlama-1.1B proved unable to adhere to the output format in standard prompting; furthermore, even when Prompt Tuning successfully enforced syntactic compliance, the model lacked the representational depth to discriminate between categories, collapsing into a single-class prediction.
 
-In contrast, Mistral-7B demonstrated that a sufficiently large model can effectively interpret constraints and leverage context. The transition from zero-shot to few-shot proved highly effective for Mistral, rectifying a strong bias toward generic "animosity" and allowing for better identification of specific categories like "threats." This confirms that larger models possess the necessary capacity to refine decision boundaries via in-context learning—a capability that appears absent in the smaller 1.1B architecture.
+In contrast, Mistral-7B demonstrated that a sufficiently large model can effectively interpret constraints and leverage context. The transition from zero-shot to few-shot proved highly effective for Mistral, rectifying a strong bias toward \textit{animosity} and allowing for better identification of specific categories like \textit{threats}. This confirms that larger models possess the necessary capacity to refine decision boundaries via in-context learning—a capability that appears absent in the smaller 1.1B architecture.
 
 %Conclusion Section Body end
 
