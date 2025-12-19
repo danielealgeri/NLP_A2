@@ -115,9 +115,8 @@ Our experiment highlights that:
     \item Prompt Tuning successfully forced such model to output valid labels, but could not induce the reasoning required for correct classification.
     \item Mistral tends to default to the \textit{animosity} class in the zero-shot setting.
 \end{itemize}
+
 %end of Introduction Body
-
-
 %\section{Background}
 %\label{sec:background}
 \attention{MAX 2 COLUMNS (3 FOR COMBINED REPORTS). DO NOT INCLUDE SECTION IF NO BACKGROUND NECESSARY. OMIT SECTION IN ASSIGNMENT REPORTS.}
@@ -150,11 +149,11 @@ It is a good idea to add figures to illustrate your pipeline and/or architecture
 %\subsection{Architecture and Pipeline}
 We implemented an inference pipeline based on the Hugging Face \texttt{transformers} library. The pipeline for each example in the dataset consists of the following stages:
 \begin{enumerate}
-    \item \textbf{Prompt Construction:} We use a strict template defining the role of the model, listing the five valid categories, and instructing the model to output \textit{only} the label.
-        \begin{itemize}
-            \item \textbf{Zero-Shot:} Instruction + target text.
-            \item \textbf{Few-Shot:} Instruction + labeled examples + target text.
-        \end{itemize} 
+    \item \textbf{Prompt Construction:} We use a strict template defining the role of the model, listing the five valid categories, and instructing the model to output \textit{only} the label. The prompt consists of the instructions, the target text and, for the Few-Shot setting, the labelled examples.
+        %\begin{itemize}
+        %    \item \textbf{Zero-Shot:} Instruction + target text.
+        %    \item \textbf{Few-Shot:} Instruction + labeled examples + target text.
+        %\end{itemize} 
     \item \textbf{Inference:} The prompt is passed to the LLM.
     \item \textbf{Output Parsing:} The raw text response is mapped to numerical IDs (0–4). If the model generates invalid text, the system defaults to \textbf{0} (\textit{not-sexist}).
 \end{enumerate}
@@ -179,11 +178,13 @@ Describe how you set up your experiments: which architectures/configurations you
 \\
 Then, \textbf{use tables} to summarize your your findings (numerical results) in validation and test. If you don't have experience with tables in \LaTeX, you might want to use \href{https://www.tablesgenerator.com/}{\LaTeX table generator} to quickly create a table template.
 }
-The performance is evaluated on the Macro F1 Score and the Accuracy Score. The following tables summarize the performance metrics obtained with the two models.\\
+The performance is evaluated on the Macro F1 Score and the Accuracy Score. The following tables summarize the obtained metrics.\\
 
 \begin{table}[h]
 \centering
+\vspace{-0.5em}
 \caption{\textbf{Zero-Shot} Inference Metrics}
+\vspace{-0.5em}
 \begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Model} & \textbf{F1-Score} & \textbf{Accuracy} \\ \midrule
@@ -192,10 +193,11 @@ TinyLlama      & 0.07              & 0.20              \\ \bottomrule
 
 \end{tabular}
 \end{table}
-
+\vspace{-1em}
 \begin{table}[h]
 \centering
 \caption{\textbf{Few-Shot} Inference Metrics}
+\vspace{-0.5em}
 \begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Model} & \textbf{F1-Score} & \textbf{Accuracy} \\ \midrule
@@ -204,7 +206,7 @@ TinyLlama      & 0.07              & 0.20              \\ \bottomrule
 \end{tabular}
 \end{table}
 
-It is crucial to note that TinyLlama's metrics are artifacts of the pipeline defaulting invalid outputs to class 0. While Prompt Tuning successfully corrected the syntax, it resulted in a semantic collapse where the model explicitly predicted \textit{not-sexist} for nearly all inputs. Consequently, the metrics remained identical, effectively shifting from a fallback-driven default to a learned prediction bias without improving discrimination.
+It is crucial to note that TinyLlama's metrics are artifacts of the pipeline defaulting invalid outputs to class \textbf{0}. While Prompt Tuning successfully corrected the syntax, it resulted in a semantic collapse where the model explicitly predicted \textit{not-sexist} for nearly all inputs. Consequently, the metrics remained identical, effectively shifting from a fallback-driven default to a learned prediction bias without improving discrimination.
 
 
 \section{Discussion}
@@ -222,23 +224,20 @@ Here you should make your analysis of the results you obtained in your experimen
 
 %Discussion Section Body start
 
-Our results show that Mistral achieves a respectable zero-shot performance which is further boosted by few-shot examples (F1 increase from 0.35 to 0.46). TinyLlama, conversely, shows static metrics (Accuracy 0.20, F1 0.07) across all setups, which match the statistical probability of a random classifier for a balanced 5-class dataset.
+Our results show that Mistral achieves a respectable Zero-Shot performance which is further boosted by Few-Shot examples (F1 increase from 0.35 to 0.46). TinyLlama, conversely, shows static metrics (Accuracy 0.20, F1 0.07) across all setups, which match the statistical probability of a random classifier for a balanced 5-class dataset.
 
 \subsection{Error Analysis}
 
-The invalid outputs provided by TinyLlama, in both Zero-Shot and Few-Shot Inference, consist in long generative text rather than discrete class labels.
+The invalid outputs provided by TinyLlama, in both Zero-Shot and Few-Shot Inference, consist in long generative text rather than discrete class labels. A possible reason for this behavior is that TinyLlama-Chat is trained primarily for conversational settings, where verbose and explanatory answers are generally preferred. Even in-context demonstrations (Few-Shot) proved insufficient to enforce syntactic adherence, likely because this technique relies on a model’s ability to perform in-context learning, which is known to scale strongly with model size.
 
-A possible reason for this behavior is that TinyLlama-Chat is trained primarily for conversational settings, %\cite{tinyllamamodelcard}
-where verbose and explanatory answers are generally preferred. Even the inclusion of in-context demonstrations (Few-Shot prompting) proved insufficient to enforce syntactic adherence, likely because this technique relies on a model’s ability to perform in-context learning, which is known to scale strongly with model size.
+Ultimately, the Prompt Tuning experiment was successful in making the model learn the syntax, as all 300 dataset examples were classified with a valid label; nevertheless, the model still failed to learn the semantics, yielding poor performance. This dual failure—first in formatting, then in discrimination—strongly suggests that the 1.1B parameter size acts as a fundamental bottleneck for classification performance.
 
-Ultimately, the Prompt Tuning experiment was successful in making the model learn the syntax, as all 300 examples in the test dataset were classified with a single, valid label; nevertheless, the model still failed to learn the semantics, leading to unsatisfying performance once again. This dual failure—first in formatting, then in discrimination—strongly suggests that the 1.1B parameter size acts as a fundamental bottleneck for the classification performance.
-
-Concerning Mistral, the model presents a strong bias towards the \textit{animosity} class in the Zero-Shot setting, which, however, was significantly mitigated by few-shot prompting, as shown by the two confusion matrices in Figure~\ref{fig:conf_matrix}
+Concerning Mistral, the model presents a strong bias towards the \textit{animosity} class in the Zero-Shot setting, which, however, was significantly mitigated by few-shot prompting, as shown by the two confusion matrices in Figure~\ref{fig:conf_matrix}.
 
 \begin{figure}[t] % Forces it to the Top
     \centering
     \begin{lstlisting}[
-        basicstyle=\ttfamily\small,
+        basicstyle=\ttfamily\footnotesize,
         frame=single,
         escapeinside={(*}{*)}
         % Note: No caption or label here anymore
@@ -248,23 +247,23 @@ Concerning Mistral, the model presents a strong bias towards the \textit{animosi
 (*\textbf{Predicted:}*) "Sexist Categories Definition:
 Threats: The text expresses intent [...]"
     \end{lstlisting}
-    
+    \vspace{-1em}
     \caption{Example of invalid TinyLlama output}
+    \vspace{-0.5em}
     \label{lst:example_output}
 \end{figure}
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=1.05\linewidth]{conf_matrix.png}
+  \includegraphics[width=1.0\linewidth]{conf_matrix.png}
   \caption{Confusion matrices for Mistral in Zero-Shot and Few-Shot Inference.}
   \label{fig:conf_matrix}
+  \vspace{-0.5em}
 \end{figure}
-
-
+\vspace{-0.5em}
 %Discussion Section Body end
-
-
 \section{Conclusion}
+\vspace{-0.5em}
 \label{sec:conclusion}
 \attention{MAX 1 COLUMN.}
 
@@ -278,9 +277,9 @@ After that, discuss the main limitations of the solution you have implemented, a
 
 %Conlcusion Section Body start
 
-In this experiment, we evaluated the capabilities of LLMs for multiclass sexism detection. We observed that model size is a decisive factor not only for rigid instruction following (syntax) but also for the semantic understanding required to distinguish between complex classes. TinyLlama-1.1B proved unable to adhere to the output format in standard prompting; furthermore, even when Prompt Tuning successfully enforced syntactic compliance, the model lacked the representational depth to discriminate between categories, collapsing into a single-class prediction.
+In this experiment, we evaluated the capabilities of LLMs for multiclass sexism detection. We observed that model size is a decisive factor not only for rigid instruction following (syntax) but also for the semantic understanding required to distinguish between complex classes. TinyLlama-1.1B proved unable to adhere to the output format in standard prompting; furthermore, even when Prompt Tuning successfully enforced syntactic compliance, the model failed in discriminating between categories, collapsing into a single-class prediction.
 
-In contrast, Mistral-7B demonstrated that a sufficiently large model can effectively interpret constraints and leverage context. The transition from zero-shot to few-shot proved highly effective for Mistral, rectifying a strong bias toward \textit{animosity} and allowing for better identification of specific categories like \textit{threats}. This confirms that larger models possess the necessary capacity to refine decision boundaries via in-context learning—a capability that appears absent in the smaller 1.1B architecture.
+In contrast, Mistral-7B demonstrated that a sufficiently large model can effectively interpret constraints and leverage context. The transition from zero-shot to few-shot proved highly effective for Mistral, rectifying its bias toward \textit{animosity} and allowing for better identification of specific categories like \textit{threats}. This confirms that larger models possess the necessary capacity to refine decision boundaries via in-context learning—a capability that appears absent in the smaller 1.1B model.
 
 %Conclusion Section Body end
 
