@@ -72,7 +72,9 @@ Master's Degree in Artificial Intelligence, University of Bologna\\
 
 \explanation{
 The abstract is very brief summary of your report. Try to keep it no longer than 15-20 lines at most. Write your objective, your approach, and your main observations (what are the findings that make this report worthwhile reading?)}
-This work compares two open-source LLMs, \textit{TinyLlama-1.1B-Chat-v1.0} and \textit{Mistral-7B-Instruct-v0.3}, on multiclass sexism detection using zero-shot and few-shot prompting. Results highlight a critical dependency on model size: TinyLlama consistently failed to follow instructions in both inference settings and, even after performing parameter-efficient Prompt Tuning, the formatting errors were corrected, but semantic reasoning was still absent, leading to a single-class prediction bias. In contrast, Mistral-7B demonstrated effective instruction adherence. Although initially biased towards generic \textit{animosity}, Mistral's performance improved significantly with few-shot examples, raising the F1-score from 0.35 to 0.46.
+
+
+This work compares two open-source LLMs, \textit{TinyLlama-1.1B-Chat-v1.0} and \textit{Mistral-7B-Instruct-v0.3}, on multiclass sexism detection using zero-shot and few-shot prompting. Results highlight a critical dependency on model size: TinyLlama consistently failed to follow instructions in both inference settings and, even after Prompt Tuning, semantic reasoning was still absent, leading to a single-class prediction bias, although formatting errors were corrected. In contrast, Mistral-7B demonstrated effective instruction adherence. Although initially biased towards one class, Mistral's performance improved significantly with few-shot examples, raising the F1-score from 0.35 to 0.46.
 %\end{quote}
 \end{abstract}
 
@@ -164,8 +166,7 @@ We implemented an inference pipeline based on the Hugging Face \texttt{transform
 \end{enumerate}
 
 %\subsection{Prompt Tuning}
-To address TinyLlama limitations, we implemented an additional Prompt Tuning pipeline for such model. This technique involves freezing the pre-trained model backbone and optimizing only a small set of continuous vector embeddings (soft prompts) that are prepended to the input (corresponding to approx. 0.006\% of parameters).
-The goal of this procedure is to align the model with the specific prompt structure to enforce valid label generation.
+To address TinyLlama limitations, we implemented an additional Prompt Tuning pipeline for such model. This technique involves freezing the pre-trained model backbone and optimizing only a small set of continuous vector embeddings that are prepended to the input (corresponding to approx. 0.006\% of parameters), aiming to align the model with the specific prompt structure.
 
 % System Description Body end
 
@@ -184,7 +185,7 @@ Describe how you set up your experiments: which architectures/configurations you
 \\
 Then, \textbf{use tables} to summarize your your findings (numerical results) in validation and test. If you don't have experience with tables in \LaTeX, you might want to use \href{https://www.tablesgenerator.com/}{\LaTeX table generator} to quickly create a table template.
 }
-The performance evaluation of the models is carried out by considering the Macro F1 Score and the Accuracy Score. The following tables summarize the performance metrics obtained during the standard prompting experiments, for Zero-Shot and Few-Shot Inference respectively.\\
+The performance is evaluated on the Macro F1 Score and the Accuracy Score. The following tables summarize the performance metrics obtained during the prompting experiments, for Zero-Shot and Few-Shot Inference respectively.\\
 
 \begin{table}[h]
 \centering
@@ -209,10 +210,7 @@ TinyLlama      & 0.07              & 0.20              \\ \bottomrule
 \end{tabular}
 \end{table}
 
-It is important to mention that, for both inference settings, the reported metrics for TinyLlama are artifacts of the evaluation pipeline rather than true performance. Because the model consistently failed to output valid labels, the parsing logic defaulted every prediction to class 0 ('not-sexist'). Consequently, the model achieved 20\% accuracy simply by matching the ground truth for that specific class by chance, reflecting the dataset distribution rather than any successful classification.\\
-
-\textbf{Prompt Tuning (TinyLlama)}\\
-Prior to prompt tuning, TinyLLaMA consistently failed to follow instructions, producing long free-form text. After fine-tuning, the model successfully learned to respect the output format constraint, generating only valid integer labels. However, this did not translate to classification success. The tuned model exhibited a strong prediction bias, assigning the class “not-sexist” (0) across almost all inputs, resulting in metrics effectively identical to the baseline fallback performance.
+It is crucial to note that in standard inference settings, TinyLlama's metrics are artifacts of the evaluation pipeline: the model consistently failed to produce valid labels, triggering a fallback to class 0 (\textit{not-sexist}) which artificially matched the ground truth about 20\% of the time. We utilized Prompt Tuning to address this specific syntactic failure. While the tuned model successfully learned to respect the output format (generating only valid integers), it exhibited a severe semantic collapse, explicitly predicting class 0 for nearly all inputs. Consequently, the final metrics remained effectively identical to the baseline; the model merely shifted from a fallback-driven default to a learned prediction bias, confirming its inability to discriminate between sexist categories regardless of formatting compliance.
 
 \section{Discussion}
 \label{sec:discussion}
@@ -240,9 +238,9 @@ In our tests, TinyLlama failed to follow the prompt instructions in the default,
 A possible reason for this behavior is that TinyLlama-Chat is trained primarily for conversational settings, %\cite{tinyllamamodelcard}
 where verbose and explanatory answers are generally preferred. Even the inclusion of in-context demonstrations (Few-Shot prompting) proved insufficient to enforce syntactic adherence, likely because this technique relies on a model’s ability to perform in-context learning, which is known to scale strongly with model size.
 
-Ultimately, the prompt tuning experiment was successful in making the model learn the syntax, as all 300 examples in the test dataset were classified with a single, valid label; nevertheless, the model still failed to learn the semantics, leading to unsatisfying performance once again. This dual failure—first in formatting, then in discrimination—strongly suggests that the 1.1B parameter size acts as a fundamental bottleneck, limiting both the inhibitory control required for instruction following
+Ultimately, the prompt tuning experiment was successful in making the model learn the syntax, as all 300 examples in the test dataset were classified with a single, valid label; nevertheless, the model still failed to learn the semantics, leading to unsatisfying performance once again. This dual failure—first in formatting, then in discrimination—strongly suggests that the 1.1B parameter size acts as a fundamental bottleneck for the classification performance.
 
-Concerning Mistral, the model presents a strong bias towards the “animosity” class in the Zero-Shot setting, which, however, was significantly mitigated by few-shot prompting, as shown by the two confusion matrices in Figure~\ref{fig:conf_matrix}
+Concerning Mistral, the model presents a strong bias towards the \textit{animosity} class in the Zero-Shot setting, which, however, was significantly mitigated by few-shot prompting, as shown by the two confusion matrices in Figure~\ref{fig:conf_matrix}
 
 \begin{figure}[h]
   \centering
