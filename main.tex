@@ -74,7 +74,7 @@ Master's Degree in Artificial Intelligence, University of Bologna\\
 The abstract is very brief summary of your report. Try to keep it no longer than 15-20 lines at most. Write your objective, your approach, and your main observations (what are the findings that make this report worthwhile reading?)}
 
 
-This work compares two open-source LLMs, \href{https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0}{\textit{TinyLlama-1.1B-Chat-v1.0}}  and \href{https://huggingface.co/mistralai/Mistral-7B-v0.3}{\textit{Mistral-7B-Instruct-v0.3}}, on multiclass sexism detection using zero-shot and few-shot prompting. Results highlight a critical dependency on model size: TinyLlama consistently failed to follow instructions in both inference settings and, even after Prompt Tuning, semantic reasoning was still absent, leading to a single-class prediction bias, although formatting errors were corrected. In contrast, Mistral-7B demonstrated effective instruction adherence. Although initially biased towards one class, Mistral's performance improved significantly with few-shot examples, raising the F1-score from 0.35 to 0.46.
+This work compares two open-source LLMs, \href{https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0}{\textit{TinyLlama-1.1B-Chat-v1.0}}  and \href{https://huggingface.co/mistralai/Mistral-7B-v0.3}{\textit{Mistral-7B-Instruct-v0.3}}, on multiclass sexism detection using zero-shot and few-shot prompting. Results highlight a critical dependency on model size: TinyLlama consistently failed to follow instructions in both inference settings and, even after Prompt Tuning, semantic reasoning was still absent, leading to a severe prediction bias, although formatting errors were corrected. In contrast, Mistral-7B demonstrated effective instruction adherence. Although initially biased towards one class, Mistral's performance improved significantly with few-shot examples, raising the F1-score from 0.35 to 0.46.
 %\end{quote}
 \end{abstract}
 
@@ -113,7 +113,7 @@ Our experiment highlights that:
 \begin{itemize}
     \item The smaller model (TinyLlama, 1.1B parameters) lacks the capacity to follow the syntactic constraints out-of-the-box, and outputs invalid labels for every instance in the dataset.
     \item Prompt Tuning successfully forced such model to output valid labels, but could not induce the reasoning required for correct classification.
-    \item Mistral tends to default to the \textit{animosity} class in the zero-shot setting.
+    \item Mistral proves capable of following the syntactic constraints in the base configuration for most examples, but tends to default to the \textit{animosity} class in the zero-shot setting.
 \end{itemize}
 
 %end of Introduction Body
@@ -206,7 +206,8 @@ TinyLlama      & 0.07              & 0.20              \\ \bottomrule
 \end{tabular}
 \end{table}
 
-It is crucial to note that TinyLlama's metrics are artifacts of the pipeline defaulting invalid outputs to class \textbf{0}. While Prompt Tuning successfully corrected the syntax, it resulted in a semantic collapse where the model explicitly predicted \textit{not-sexist} for nearly all inputs. Consequently, the metrics remained identical, effectively shifting from a fallback-driven default to a learned prediction bias without improving discrimination.
+It is crucial to note that TinyLlama's metrics are artifacts of the pipeline defaulting invalid outputs to class \textbf{0}. While Prompt Tuning successfully corrected the syntax, it resulted in a semantic collapse where the model constrained its predictions almost exclusively to \textit{not-sexist} and \textit{threats}.
+This shift yielded only a marginal performance increase (Accuracy 0.23, F1 0.12), which shows how the model switched from a fallback-driven default to a learned prediction bias, without improving discrimination.
 
 
 \section{Discussion}
@@ -277,7 +278,7 @@ After that, discuss the main limitations of the solution you have implemented, a
 
 %Conlcusion Section Body start
 
-In this experiment, we evaluated the capabilities of LLMs for multiclass sexism detection. We observed that model size is a decisive factor not only for rigid instruction following (syntax) but also for the semantic understanding required to distinguish between complex classes. TinyLlama-1.1B proved unable to adhere to the output format in standard prompting; furthermore, even when Prompt Tuning successfully enforced syntactic compliance, the model failed in discriminating between categories, collapsing into a single-class prediction.
+In this experiment, we evaluated the capabilities of LLMs for multiclass sexism detection. We observed that model size is a decisive factor not only for rigid instruction following (syntax) but also for the semantic understanding required to distinguish between complex classes. TinyLlama-1.1B proved unable to adhere to the output format in standard prompting; furthermore, even when Prompt Tuning successfully enforced syntactic compliance, the model failed in discriminating between categories, collapsing predictions into just two classes.
 
 In contrast, Mistral-7B demonstrated that a sufficiently large model can effectively interpret constraints and leverage context. The transition from zero-shot to few-shot proved highly effective for Mistral, rectifying its bias toward \textit{animosity} and allowing for better identification of specific categories like \textit{threats}. This confirms that larger models possess the necessary capacity to refine decision boundaries via in-context learning—a capability that appears absent in the smaller 1.1B model.
 
